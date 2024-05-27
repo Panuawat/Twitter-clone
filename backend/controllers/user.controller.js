@@ -114,7 +114,7 @@ export const updateUser = async (req, res) => {
     try {
         // ตรวจสอบว่ามี body มาจาก request หรือไม่
         if (!req.body) {
-            return res.status(400).json({ message: "No data provided" });
+            return res.status(400).json({ message: "No data provided" });//ถ้าไม่มีข้อมูลใน request body จะส่งสถานะ 400 พร้อมข้อความ "No data provided"
         }
 
         let user = await User.findById(userId);
@@ -122,6 +122,7 @@ export const updateUser = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
+        //ถ้าต้องการเปลี่ยนรหัสผ่าน ต้องมีทั้ง currentPassword และ newPassword
         if ((newPassword && !currentPassword) || (currentPassword && !newPassword)) {
             return res.status(400).json({ error: "Please provide both current password and new password" });
         }
@@ -132,15 +133,17 @@ export const updateUser = async (req, res) => {
                 return res.status(400).json({ error: "Current password is incorrect" });
             }
             if (newPassword.length < 6) {
-                return res.status(400).json({ error: "Password must be at least 6 characters long" });
+                return res.status(400).json({ error: "Password must be at least 6 characters long" });//ถ้ารหัสผ่านใหม่มีความยาวน้อยกว่า 6 ตัวอักษร จะส่งสถานะ 400 พร้อมข้อความ "Password must be at least 6 characters long"
             }
+
+            //ถ้าผ่านการตรวจสอบ จะเข้ารหัสรหัสผ่านใหม่และเก็บใน user.password
             const salt = await bcrypt.genSalt(10);
             user.password = await bcrypt.hash(newPassword, salt);
         }
 
         // การอัปโหลดรูปโปรไฟล์
         if (profileImg) {
-            if (user.profileImg) {
+            if (user.profileImg) {//ถ้ามีรูปโปรไฟล์ใหม่ จะทำลายรูปโปรไฟล์เก่าและอัปโหลดรูปใหม่ จากนั้นเก็บ URL ของรูปใหม่
                 await cloudinary.uploader.destroy(user.profileImg.split('/').pop().split('.')[0]);
             }
             const uploadedResponse = await cloudinary.uploader.upload(profileImg);
@@ -148,7 +151,7 @@ export const updateUser = async (req, res) => {
         }
 
         // การอัปโหลดรูปหน้าปก
-        if (coverImg) {
+        if (coverImg) {//ถ้ามีรูปหน้าปกใหม่ จะทำลายรูปหน้าปกเก่าและอัปโหลดรูปใหม่ จากนั้นเก็บ URL ของรูปใหม่
             if (user.coverImg) {
                 await cloudinary.uploader.destroy(user.coverImg.split('/').pop().split('.')[0]);
             }
@@ -167,7 +170,7 @@ export const updateUser = async (req, res) => {
 
         user = await user.save();
 
-        // ไม่ส่งรหัสผ่านใน response
+        //ลบรหัสผ่านจากผู้ใช้เพื่อไม่ให้ส่งกลับใน response
         user.password = null;
 
         return res.status(200).json(user);

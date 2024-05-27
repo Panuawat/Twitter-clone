@@ -15,7 +15,7 @@ const Post = ({ post }) => {
   const { data: authUser } = useQuery({ queryKey: ["authUser"] });
   const queryClient = useQueryClient();
 
-  console.log(post);
+  // console.log(post);
 
   const { mutate: deletePost, isPending } = useMutation({
     mutationFn: async () => {

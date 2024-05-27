@@ -217,23 +217,23 @@ export const getLikedPosts = async (req, res) => {
 export const getFollowing = async (req, res) => {
   try {
     const userId = req.user._id;
-    const user = await User.findById(userId);
+    const user = await User.findById(userId);//นำรหัสผู้ใช้ปัจจุบันที่เก็บใน req.user._id มาใช้ในการค้นหาข้อมูลผู้ใช้จากฐานข้อมูล โดยใช้ User.findById(userId)
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
-    const following = user.following;
+    const following = user.following;//ดึงรายการผู้ที่ผู้ใช้ปัจจุบันกำลังติดตามมาเก็บไว้ในตัวแปร following
 
-    const feedPosts = await Post.find({ user: { $in: following } })
-      .sort({ createdAt: -1 })
+    const feedPosts = await Post.find({ user: { $in: following } })//ค้นหาโพสต์ที่มีผู้ใช้ของโพสต์ (user) อยู่ในรายการผู้ที่ผู้ใช้ปัจจุบันกำลังติดตาม โดยใช้ Post.find({ user: { $in: following } })
+      .sort({ createdAt: -1 })//เรียงลำดับโพสต์ตามเวลาที่สร้างใหม่ที่สุด (createdAt) โดยใช้ .sort({ createdAt: -1 })
       .populate({
         path: "user",
         select: "-password",
       })
       .populate({
         path: "comments.user",
-        select: "-password",
+        select: "-password",  //ใช้ .populate() เพื่อเติมข้อมูลของผู้ใช้ (user) และความคิดเห็น (comments) โดยไม่รวม password ของผู้ใช้
       });
-    res.status(200).json(feedPosts);
+    res.status(200).json(feedPosts);//ส่งโพสต์ที่ได้มากลับไปยังผู้ใช้ โดยส่งสถานะ 200 พร้อมข้อมูลโพสต์
   } catch (err) {
     console.log("Error in getFollowing controller: ", err);
     res.status(500).json({ error: "Internal server error" });
@@ -242,22 +242,21 @@ export const getFollowing = async (req, res) => {
 
 export const getUserPosts = async (req, res) => {
   try {
-    const { username } = req.params;
-    const user = await User.findOne({ username });
+    const { username } = req.params;//ดึงชื่อผู้ใช้ (username) ที่ระบุใน request parameters
+    const user = await User.findOne({ username });//ค้นหาผู้ใช้ในฐานข้อมูล
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
-    const posts = await Post.find({ user: user._id })
-      .sort({ createAt: -1 })
+    const posts = await Post.find({ user: user._id })//ค้นหาโพสต์ทั้งหมดที่มี user เป็น ObjectId ของผู้ใช้ที่ค้นหาได้
+      .sort({ createAt: -1 })//เรียงลำดับโพสต์ตามเวลาสร้างล่าสุด
       .populate({
         path: "user",
         select: "-password",
       })
-      .populate({
+      .populate({//Populate ข้อมูลผู้ใช้ของโพสต์และผู้ใช้ที่แสดงความคิดเห็นในโพสต์ เพื่อไม่แสดงรหัสผ่าน
         path: "comments.user",
         select: "-password",
       });
-
     res.status(200).json(posts);
   } catch (error) {
     console.log("Error in getUserProfile controller: ", error);
